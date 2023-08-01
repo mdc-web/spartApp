@@ -1,9 +1,10 @@
 const express = require("express");
-const connectDB = require("./config/db");
-const dotenv = require("dotenv").config();
-const port = 5000;
-const app = express();
+const cookieParser = require('cookie-parser');
 const userRoutes = require('./routes/user.routes');
+const dotenv = require("dotenv").config();
+const connectDB = require("./config/db");
+const {checkUser, requireAuth} = require('./middleware/auth.middleware');
+const app = express();
 
 //connexion db
 connectDB();
@@ -14,8 +15,19 @@ connectDB();
 //middleware ->pour lire les data entrante
 app.use(express.json());
 app.use(express.urlencoded({ extended: false}));
+app.use(cookieParser());
 
+//jwt
+app.get('*', checkUser);
+app.get('/jwtid', requireAuth, (req, res) => {
+    res.status(200).send(res.locals.user._id)
+})
+
+//routes
 app.use("/api/user", userRoutes);
 
-// Lancer le serveur
-app.listen (port, () => console.log("Le seveur a démarré au port " + port));
+
+//server
+app.listen(process.env.PORT, () => {
+    console.log(`Le serveur a demmaré au port ${process.env.PORT}`);
+})
